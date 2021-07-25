@@ -153,20 +153,29 @@ public class VoskActivity extends Activity implements RecognitionListener {
     @Override
     public void onResult(String hypothesis) {
 
+        Log.d(TAG,"onResult方法被调用");
+        Log.d(TAG,hypothesis);
+
         fluency++;
 
         Gson gson = new Gson();
         results result = gson.fromJson(hypothesis, results.class);
 
-        if(result==null) return;
-        if(result.getResult()==null) return;
+        if(result==null) {
+            Log.d(TAG,"转换失败，啥也没有");
+            return;
+        };
+        if(result.getResult()==null) {
+            Log.d(TAG,"result里是空的");
+            return;
+        };
 
         try {
             for (partialResult partialResult:result.getResult()) {
                 double conf = partialResult.getConf();
+                Log.d(TAG,conf+"");
                 words.add(partialResult.getWord());
                 confs.add(conf);
-
                 /*
                 if(mapper.containsKey(partialResult.getWord())) {
                     //目前没有想到什么好的办法，所以目前只是将置信度设的高一点
@@ -177,11 +186,10 @@ public class VoskActivity extends Activity implements RecognitionListener {
                  */
             }
         }catch (Exception e){
+            Log.d(TAG,"出现了异常，没存进去");
             e.printStackTrace();
         }
-
-        Log.d(TAG,"onResult方法被调用");
-        Log.d(TAG,hypothesis);
+        Log.d(TAG,result.getText());
         sentence_read.append(result.getText());
     }
 
@@ -219,6 +227,8 @@ public class VoskActivity extends Activity implements RecognitionListener {
     @Override
     public void onPartialResult(String hypothesis) {
         Log.d(TAG,"onPartialResult方法被调用");
+
+        Log.d(TAG,hypothesis);
     }
 
     @Override
@@ -377,8 +387,8 @@ public class VoskActivity extends Activity implements RecognitionListener {
                 speechService = null;
             }
             try {
-                Recognizer rec = new Recognizer(model, 128000.0f);
-                speechService = new SpeechService(rec, 128000.0f);
+                Recognizer rec = new Recognizer(model, 44100.0f);
+                speechService = new SpeechService(rec, 44100.0f);
                 speechService.startListening(this);
             } catch (IOException e) {
                 setErrorState(e.getMessage());
@@ -388,7 +398,7 @@ public class VoskActivity extends Activity implements RecognitionListener {
             btn_mic.setText("StartRecord");
             speechService.stop();
             speechService.shutdown();
-            show();
+
         }
 
         /*
@@ -441,16 +451,23 @@ public class VoskActivity extends Activity implements RecognitionListener {
         Log.d(TAG,"show方法被调用");
         try {
             sentence = new ConverterUtils().fileTostring(txtName);
+            Log.d(TAG,"转换成功");
         } catch (IOException e) {
+            Log.d(TAG,"转换失败");
             e.printStackTrace();
         }
         String read = sentence_read.toString();
+
+        Log.d(TAG,"confs里有"+confs.toString());
+        Log.d(TAG,"words里有"+words.toString());
+        Log.d(TAG,"读到了"+read);
 
         sentence = sentence.replace(",", " , ");
         sentence = sentence.replace("."," . ");
         Lcs lcs = new Lcs(sentence.toLowerCase(), sentence_read.toString().toLowerCase());
 
         lcs.Build();
+        Log.d(TAG,"lcs build成功");
 
         List<String> answerCommonList = lcs.getAnswerCommonList();
 
@@ -458,27 +475,36 @@ public class VoskActivity extends Activity implements RecognitionListener {
         sentence_splited = new ArrayList<>();
         sentence_splited.addAll(Arrays.asList(sentence.split(" ")));
 
+        Log.d(TAG,sentence_splited.toString());
+
         List<Integer> answerFirst = lcs.getAnswerFirstStringIndexs();
 
         resultView.setText("");
 
         for (int i = 0; i < sentence_splited.size(); i++) {
             String temp = sentence_splited.get(i);
-            int index = 0;
+            int index = -1;
             SpannableString msp = msp = new SpannableString(temp+" ");
             if (words.contains(temp)){
                 index = words.indexOf(temp);
             }
             if(answerFirst.contains(i)){
                 try{
-                    if(confs.get(index)<0.7){
-                        msp.setSpan(new ForegroundColorSpan(Color.YELLOW),
-                                0,msp.length(),Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    if(index!=-1){
+                        if(confs.get(index)<0.7){
+                            msp.setSpan(new ForegroundColorSpan(Color.YELLOW),
+                                    0,msp.length(),Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                        }else {
+                            msp.setSpan(new ForegroundColorSpan(Color.GREEN),
+                                    0,msp.length(),Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                        }
                     }else {
                         msp.setSpan(new ForegroundColorSpan(Color.GREEN),
                                 0,msp.length(),Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                     }
+
                 }catch (Exception e){
+                    Log.d(TAG,"出现了异常");
                     msp.setSpan(new ForegroundColorSpan(Color.GREEN),
                             0,msp.length(),Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                 }
@@ -523,6 +549,7 @@ public class VoskActivity extends Activity implements RecognitionListener {
 
         //设置字体前景色
 
+        Log.d(TAG,"开始打分");
         //流利度
         double flu_score = 0;
         //完整度
@@ -555,6 +582,7 @@ public class VoskActivity extends Activity implements RecognitionListener {
 
         //求完整度
 
+        Log.d(TAG,answerCommonList.toString());
         com_score = (double)lastIndex*100/sentence_splited.size();
 
         //求发音
@@ -574,7 +602,7 @@ public class VoskActivity extends Activity implements RecognitionListener {
         resultView.append("\n"+"发音："+(int)Math.floor(pro_score));
         resultView.append("\n"+"准确度："+(int)Math.floor(acc_score));
         resultView.append("\n"+"总分："+(int)Math.floor(tot_score));
-
+        Log.d(TAG,"打分结束");
     }
 
 }

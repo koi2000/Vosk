@@ -2,9 +2,9 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/vosk-android-demo-master.iml" filepath="$PROJECT_DIR$/.idea/modules/vosk-android-demo-master.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/vosk-android-demo-master.app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/vosk-android-demo-master.app.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/models/vosk-android-demo-master.models.iml" filepath="$PROJECT_DIR$/.idea/modules/models/vosk-android-demo-master.models.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Vosk.iml" filepath="$PROJECT_DIR$/.idea/modules/Vosk.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/Vosk.app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/Vosk.app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/models/Vosk.models.iml" filepath="$PROJECT_DIR$/.idea/modules/models/Vosk.models.iml" />
     </modules>
   </component>
 </project>
