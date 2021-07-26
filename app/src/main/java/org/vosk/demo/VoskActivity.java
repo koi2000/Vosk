@@ -479,11 +479,24 @@ public class VoskActivity extends Activity implements RecognitionListener {
 
         List<Integer> answerFirst = lcs.getAnswerFirstStringIndexs();
 
+
         resultView.setText("");
+
+        Integer punctuationNum = 0;
+        Integer lastIndex = 0;
+        if(answerFirst.size()!=0){
+            lastIndex = answerFirst.get(answerFirst.size() - 1);
+        }
 
         for (int i = 0; i < sentence_splited.size(); i++) {
             String temp = sentence_splited.get(i);
             int index = -1;
+            boolean isPunctuation = false;
+
+            if ((i<=lastIndex)&&(temp.equals(",")||temp.equals("."))){
+                isPunctuation=true;
+                punctuationNum++;
+            }
             SpannableString msp = msp = new SpannableString(temp+" ");
             if (words.contains(temp)){
                 index = words.indexOf(temp);
@@ -498,6 +511,8 @@ public class VoskActivity extends Activity implements RecognitionListener {
                             msp.setSpan(new ForegroundColorSpan(Color.GREEN),
                                     0,msp.length(),Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                         }
+                        confs.remove(index);
+                        words.remove(index);
                     }else {
                         msp.setSpan(new ForegroundColorSpan(Color.GREEN),
                                 0,msp.length(),Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -510,6 +525,10 @@ public class VoskActivity extends Activity implements RecognitionListener {
                 }
             }else {
                 msp.setSpan(new ForegroundColorSpan(Color.RED),
+                        0,msp.length(),Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+            if (isPunctuation){
+                msp.setSpan(new ForegroundColorSpan(Color.GREEN),
                         0,msp.length(),Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
             resultView.append(msp);
@@ -561,10 +580,7 @@ public class VoskActivity extends Activity implements RecognitionListener {
         //总分
         double tot_score = 0;
 
-        Integer lastIndex = 0;
-        if(answerFirst.size()!=0){
-            lastIndex = answerFirst.get(answerFirst.size() - 1);
-        }
+
 
         //求流利度
         //查看当前读了多少句
@@ -583,7 +599,7 @@ public class VoskActivity extends Activity implements RecognitionListener {
         //求完整度
 
         Log.d(TAG,answerCommonList.toString());
-        com_score = (double)lastIndex*100/sentence_splited.size();
+        com_score = (double)Math.min(lastIndex,answerCommonList.size())*100/sentence_splited.size();
 
         //求发音
         int sum = 0;
@@ -593,7 +609,7 @@ public class VoskActivity extends Activity implements RecognitionListener {
         pro_score = (double)sum*100/confs.size();
 
         //求准确度
-        acc_score = (double) (answerFirst.size())*100/sentence_splited.size();
+        acc_score = (double) (answerFirst.size()+punctuationNum)*100/sentence_splited.size();
 
         //求总分
         tot_score = (flu_score+com_score+pro_score+acc_score)/4;
