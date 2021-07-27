@@ -461,7 +461,8 @@ public class VoskActivity extends Activity implements RecognitionListener {
         Log.d(TAG,"confs里有"+confs.toString());
         Log.d(TAG,"words里有"+words.toString());
         Log.d(TAG,"读到了"+read);
-
+//        数字转英文
+        sentence = ConvertNumberToStringUtils.convert(sentence);
         sentence = sentence.replace(",", " , ");
         sentence = sentence.replace("."," . ");
         Lcs lcs = new Lcs(sentence.toLowerCase(), sentence_read.toString().toLowerCase());
