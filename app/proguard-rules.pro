@@ -31,3 +31,8 @@
 }
 
 ##---------------End: proguard configuration for Gson  ----------
+
+##---------------START: proguard configuration for RXFFMPEG  ----------
+-dontwarn io.microshow.rxffmpeg.**
+-keep class io.microshow.rxffmpeg.**{*;}
+##---------------END: proguard configuration for RXFFMPEG  ----------
