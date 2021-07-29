@@ -458,7 +458,7 @@ public class VoskActivity extends Activity implements RecognitionListener {
         Log.d(TAG,sentence_splited.toString());
 
         List<Integer> answerFirst = lcs.getAnswerFirstStringIndexs();
-
+        List<Integer> answerSecond = lcs.getAnswerSecondStringIndexs();
 
         resultView.setText("");
 
