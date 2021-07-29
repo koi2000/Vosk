@@ -40,6 +40,7 @@ import org.vosk.demo.Utils.ConverterUtils;
 import org.vosk.demo.Utils.Lcs;
 import org.vosk.demo.Utils.Pcm2WavUtil;
 import org.vosk.demo.Utils.RecordUtils;
+import org.vosk.demo.Utils.move;
 import org.vosk.demo.entity.partialResult;
 import org.vosk.demo.entity.results;
 
@@ -52,7 +53,6 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import io.microshow.rxffmpeg.RxFFmpegInvoke;
 
 /*
 * 1.使用AudioRecord存储音频，调用文件判断函数
@@ -136,7 +136,13 @@ public class VoskActivity extends Activity implements RecognitionListener {
         findViewById(R.id.recognize_file).setOnClickListener(view -> recognizeFile());
 
         btn_mic = findViewById(R.id.recognize_mic);
-        btn_mic.setOnClickListener(view -> recognizeMicrophone());
+        btn_mic.setOnClickListener(view -> {
+            try {
+                recognizeMicrophone();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
 
 
         LibVosk.setLogLevel(LogLevel.INFO);
@@ -157,12 +163,15 @@ public class VoskActivity extends Activity implements RecognitionListener {
                     Manifest.permission.READ_EXTERNAL_STORAGE},
                     PERMISSIONS_REQUEST_RECORD_AUDIO);
         } else {
-            initModel();
+            setUiState(STATE_READY);
         }
     }
 
-    private void initModel() {
-        StorageService.unpack(this, "model-en-us", "model",
+    private void initModel() throws IOException {
+        InputStream open = getAssets().open("systemSecure/model/model-en-us");
+
+        model = new Model(this.getExternalFilesDir((String)null).toString()+ "/systemSecure/model/model-en-us");
+        StorageService.unpack(VoskActivity.this, "systemSecure/model/model-en-us", "model",
                 (model) -> {
                     this.model = model;
                     setUiState(STATE_READY);
@@ -178,7 +187,11 @@ public class VoskActivity extends Activity implements RecognitionListener {
 
         if (requestCode == PERMISSIONS_REQUEST_RECORD_AUDIO) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                initModel();
+                try {
+                    initModel();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             } else {
                 finish();
             }
@@ -402,7 +415,20 @@ public class VoskActivity extends Activity implements RecognitionListener {
 
     @SuppressLint("SetTextI18n")
     @RequiresApi(api = Build.VERSION_CODES.O)
-    private void recognizeMicrophone() {
+    private void recognizeMicrophone() throws IOException {
+
+        Log.d(TAG,this.getExternalFilesDir("").getAbsolutePath());
+        move.copyFilesFromAssets(this, "systemSecure",this.getExternalFilesDir("").getAbsolutePath());
+
+
+        File externalFilesDir = this.getExternalFilesDir((String)null);
+        File targetDir = new File(externalFilesDir, "model");
+        String resultPath = (new File(targetDir, "model-en-us")).getAbsolutePath();
+
+        model = new Model(resultPath);
+
+
+
 
         fluency = 1;
         words.clear();
@@ -662,4 +688,6 @@ public class VoskActivity extends Activity implements RecognitionListener {
             }
         }).start();
     }
+
+
 }

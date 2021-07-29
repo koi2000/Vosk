@@ -1,4 +1,4 @@
-apply plugin: 'com.android.application'
+apply plugin: 'com.android.library'
 
 repositories {
     google()
@@ -10,7 +10,6 @@ repositories {
 android {
     compileSdkVersion 29
     defaultConfig {
-        applicationId "org.vosk.demo"
         minSdkVersion 21
         targetSdkVersion 29
         versionCode 1
@@ -37,8 +36,26 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.2.0'
     implementation 'net.java.dev.jna:jna:5.8.0@aar'
     implementation group: 'com.alphacephei', name: 'vosk-android', version: '0.3.23'
-    implementation project(':models')
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'com.google.android.material:material:1.2.1'
     implementation 'androidx.constraintlayout:constraintlayout:2.0.1'
 }
+
+
+task makeJar(type: Copy) {
+    //删除存在的
+    delete 'build/libs/myjar.jar'
+    //设置拷贝的文件
+    from('build/intermediates/aar_main_jar/release/')
+    //打进jar包后的文件目录
+    into('build/libs/')
+    //将classes.jar放入build/libs/目录下
+    //include ,exclude参数来设置过滤
+    //（我们只关心classes.jar这个文件）
+    include('classes.jar')
+    //重命名
+    rename ('classes.jar', 'myjar.jar')
+}
+
+makeJar.dependsOn(build)
+
