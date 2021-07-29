@@ -16,5 +16,8 @@
     <string name="continueRecognition">Continue</string>
     <string name="startRecord">StartRecord</string>
     <string name="score">score</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="开始">start</string>
 
 </resources>

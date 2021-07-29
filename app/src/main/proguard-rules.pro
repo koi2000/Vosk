@@ -14,8 +14,8 @@
 #-keep class com.google.gson.stream.** { *; }
 
 # Application classes that will be serialized/deserialized over Gson
--keep class org.vosk.demo.results { *; }
--keep class org.vosk.demo.partialResult { *; }
+-keep class org.vosk.demo.entity.results { *; }
+-keep class org.vosk.demo.entity.partialResult { *; }
 
 
 # Prevent proguard from stripping interface information from TypeAdapter, TypeAdapterFactory,
