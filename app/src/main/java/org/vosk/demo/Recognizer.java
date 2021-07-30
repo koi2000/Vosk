@@ -44,14 +44,14 @@ public class Recognizer extends Activity implements RecognitionListener {
     private List<String>words;//需手动更新
     //存储转换后的句子，符合模型的要求
     private String grammer;
-    private String txtPath;
+    private String txt;
     private String audioPath;
 
-    public Recognizer(String txtPath, String audioPath) {
+    public Recognizer(String txt, String audioPath) {
         initModel();
         confs = new ArrayList<>();
         words = new ArrayList<>();
-        this.txtPath = txtPath;
+        this.txt = txt;
         this.audioPath = audioPath;
     }
 
@@ -154,7 +154,7 @@ public class Recognizer extends Activity implements RecognitionListener {
             speechStreamService = null;
         } else {
             try {
-                grammer = new ConverterUtils().fileTogrammer(txtPath);
+                grammer = new ConverterUtils().stringToGrammer(txt);
                 org.vosk.Recognizer rec = new org.vosk.Recognizer(model, 44100.f, grammer.toLowerCase());
 
                 InputStream ais = new FileInputStream(new File(audioPath));
@@ -176,13 +176,7 @@ public class Recognizer extends Activity implements RecognitionListener {
     @RequiresApi(api = Build.VERSION_CODES.N)
     private int check(){
         Log.d(TAG,"show方法被调用");
-        try {
-            sentence = new ConverterUtils().fileTostring(txtPath);
-            Log.d(TAG,"转换成功");
-        } catch (IOException e) {
-            Log.d(TAG,"转换失败");
-            e.printStackTrace();
-        }
+        sentence = txt;
         String read = sentence_read.toString();
 
 
