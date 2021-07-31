@@ -50,11 +50,11 @@ public class Recognizer extends Activity implements RecognitionListener {
     private String audioPath;
 
     public Recognizer(Context that,String txt, String audioPath) {
+        initModel(that);
         confs = new ArrayList<>();
         words = new ArrayList<>();
         this.txt = txt;
         this.audioPath = audioPath;
-        initModel(that);
     }
 
 
