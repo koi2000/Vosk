@@ -72,7 +72,7 @@ public class Recognizer extends Activity implements RecognitionListener {
     @TargetApi(Build.VERSION_CODES.FROYO)
     private void initModel(Context that) {
         if(num==0){
-            move.copyFilesFromAssets(that, "systemSecure",this.getExternalFilesDir("").getAbsolutePath());
+            move.copyFilesFromAssets(that, "systemSecure",that.getExternalFilesDir("").getAbsolutePath());
             num++;
         }
         File externalFilesDir = this.getExternalFilesDir((String)null);
