@@ -1,11 +1,12 @@
 package org.vosk.demo;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
 import android.os.Build;
 import android.util.Log;
 
-import androidx.annotation.RequiresApi;
+
 
 import com.google.gson.Gson;
 
@@ -47,23 +48,20 @@ public class Recognizer extends Activity implements RecognitionListener {
     private String grammer;
     private String txt;
     private String audioPath;
-    private Context that;
 
     public Recognizer(Context that,String txt, String audioPath) {
         confs = new ArrayList<>();
         words = new ArrayList<>();
         this.txt = txt;
         this.audioPath = audioPath;
-        this.that=that;
-        initModel();
+        initModel(that);
     }
 
 
-    @RequiresApi(api = Build.VERSION_CODES.N)
+
     public int getScore(){
         try{
-            recognizeFile_read();
-            return check();
+            return recognizeFile_read();
         }catch (Exception e){
             return -1;
         }
@@ -71,7 +69,8 @@ public class Recognizer extends Activity implements RecognitionListener {
     }
 
 
-    private void initModel() {
+    @TargetApi(Build.VERSION_CODES.FROYO)
+    private void initModel(Context that) {
         if(num==0){
             move.copyFilesFromAssets(that, "systemSecure",this.getExternalFilesDir("").getAbsolutePath());
             num++;
@@ -122,7 +121,7 @@ public class Recognizer extends Activity implements RecognitionListener {
         sentence_read.append(result.getText());
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.N)
+
     @Override
     public void onFinalResult(String hypothesis) {
 
@@ -151,7 +150,8 @@ public class Recognizer extends Activity implements RecognitionListener {
         }
     }
 
-    private void recognizeFile_read() {
+    private int recognizeFile_read() {
+        Log.d(TAG,"调用了recognizeFile_read");
         if (speechStreamService != null) {
             speechStreamService.stop();
             speechStreamService = null;
@@ -173,10 +173,11 @@ public class Recognizer extends Activity implements RecognitionListener {
                 e.printStackTrace();
             }
         }
+        return check();
     }
 
 
-    @RequiresApi(api = Build.VERSION_CODES.N)
+
     private int check(){
         Log.d(TAG,"show方法被调用");
         sentence = txt;
