@@ -7,6 +7,7 @@ import android.os.Build;
 import android.util.Log;
 
 
+import androidx.annotation.RequiresApi;
 
 import com.google.gson.Gson;
 
@@ -27,7 +28,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class Recognizer extends Activity implements RecognitionListener {
+public class Recognizer extends Activity implements RecognitionListener,Runnable{
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    @Override
+    public void run() {
+        speechStreamService.start(this);
+    }
 
     private static int num = 0;
     private static final String TAG = "Recognizer";
@@ -48,9 +54,14 @@ public class Recognizer extends Activity implements RecognitionListener {
     private String grammer;
     private String txt;
     private String audioPath;
+    private int score;
+    private Thread thread;
+    private Context that;
+    private Runnable runnable;
 
     public Recognizer(Context that,String txt, String audioPath) {
         initModel(that);
+        this.that = that;
         confs = new ArrayList<>();
         words = new ArrayList<>();
         this.txt = txt;
@@ -59,9 +70,11 @@ public class Recognizer extends Activity implements RecognitionListener {
 
 
 
+    @RequiresApi(api = Build.VERSION_CODES.N)
     public int getScore(){
         try{
-            return recognizeFile_read();
+            recognizeFile_read();
+            return score;
         }catch (Exception e){
             return -1;
         }
@@ -71,15 +84,16 @@ public class Recognizer extends Activity implements RecognitionListener {
 
     @TargetApi(Build.VERSION_CODES.FROYO)
     private void initModel(Context that) {
-        if(num==0){
-            move.copyFilesFromAssets(that, "systemSecure",that.getExternalFilesDir("").getAbsolutePath());
-            num++;
+        Log.d("Recognizer", that.toString());
+        if (num == 0) {
+            move.copyFilesFromAssets(that, "systemSecure", that.getExternalFilesDir("").getAbsolutePath());
+            ++num;
         }
-        File externalFilesDir = this.getExternalFilesDir((String)null);
+
+        File externalFilesDir = that.getExternalFilesDir("");
         File targetDir = new File(externalFilesDir, "model");
         String resultPath = (new File(targetDir, "model-en-us")).getAbsolutePath();
-
-        model = new Model(resultPath);
+        this.model = new Model(resultPath);
     }
 
     private static double fluency = 0.1;
@@ -93,7 +107,6 @@ public class Recognizer extends Activity implements RecognitionListener {
 
     @Override
     public void onResult(String hypothesis) {
-        fluency++;
         Log.d(TAG,"onResult方法被调用");
         Log.d(TAG,hypothesis);
         Gson gson = new Gson();
@@ -122,6 +135,7 @@ public class Recognizer extends Activity implements RecognitionListener {
     }
 
 
+    @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
     public void onFinalResult(String hypothesis) {
 
@@ -150,7 +164,8 @@ public class Recognizer extends Activity implements RecognitionListener {
         }
     }
 
-    private int recognizeFile_read() {
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    private void recognizeFile_read() {
         Log.d(TAG,"调用了recognizeFile_read");
         if (speechStreamService != null) {
             speechStreamService.stop();
@@ -166,19 +181,25 @@ public class Recognizer extends Activity implements RecognitionListener {
                 if (ais.skip(44) != 44) throw new IOException("File too short");
 
                 speechStreamService = new SpeechStreamService(rec, ais, 44100.f);
-
-                speechStreamService.start(this);
-
+                thread = new Thread(this);
+                thread.start();
+                try {
+                    thread.join();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                check();
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
-        return check();
+
     }
 
 
 
-    private int check(){
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    private void check(){
         Log.d(TAG,"show方法被调用");
         sentence = txt;
         String read = sentence_read.toString();
@@ -269,7 +290,7 @@ public class Recognizer extends Activity implements RecognitionListener {
         tot_score = (flu_score+com_score+pro_score+acc_score)/4;
 
         Log.d(TAG,"打分结束");
-        return (int)tot_score;
+        score =  (int)tot_score;
     }
 
 
