@@ -1,6 +1,7 @@
 package org.vosk.demo;
 
 import android.app.Activity;
+import android.content.Context;
 import android.os.Build;
 import android.util.Log;
 
@@ -46,13 +47,15 @@ public class Recognizer extends Activity implements RecognitionListener {
     private String grammer;
     private String txt;
     private String audioPath;
+    private Context that;
 
-    public Recognizer(String txt, String audioPath) {
-        initModel();
+    public Recognizer(Context that,String txt, String audioPath) {
         confs = new ArrayList<>();
         words = new ArrayList<>();
         this.txt = txt;
         this.audioPath = audioPath;
+        this.that=that;
+        initModel();
     }
 
 
@@ -70,7 +73,7 @@ public class Recognizer extends Activity implements RecognitionListener {
 
     private void initModel() {
         if(num==0){
-            move.copyFilesFromAssets(this, "systemSecure",this.getExternalFilesDir("").getAbsolutePath());
+            move.copyFilesFromAssets(that, "systemSecure",this.getExternalFilesDir("").getAbsolutePath());
             num++;
         }
         File externalFilesDir = this.getExternalFilesDir((String)null);
