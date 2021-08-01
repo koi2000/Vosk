@@ -4,6 +4,7 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
 import android.os.Build;
+import android.os.Looper;
 import android.util.Log;
 
 
@@ -29,14 +30,9 @@ import java.util.Arrays;
 import java.util.List;
 
 public class Recognizer extends Activity implements RecognitionListener,Runnable{
-    @RequiresApi(api = Build.VERSION_CODES.N)
-    @Override
-    public void run() {
-        speechStreamService.start(this);
-    }
 
     private static int num = 0;
-    private static final String TAG = "Recognizer";
+    private static final String TAG = "MainActivity4";
 
     private Model model;
     private SpeechStreamService speechStreamService;
@@ -58,9 +54,9 @@ public class Recognizer extends Activity implements RecognitionListener,Runnable
     private Thread thread;
     private Context that;
     private Runnable runnable;
+    private static double fluency = 0.1;
 
     public Recognizer(Context that,String txt, String audioPath) {
-        initModel(that);
         this.that = that;
         confs = new ArrayList<>();
         words = new ArrayList<>();
@@ -69,16 +65,24 @@ public class Recognizer extends Activity implements RecognitionListener,Runnable
     }
 
 
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    @Override
+    public void run() {
+        Looper.prepare();
+        initModel(that);
+        recognizeFile_read();
+        Looper.loop();
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    public void build(){
+        thread = new Thread(this);
+        thread.start();
+    }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
     public int getScore(){
-        try{
-            recognizeFile_read();
-            return score;
-        }catch (Exception e){
-            return -1;
-        }
-
+        return score;
     }
 
 
@@ -94,9 +98,10 @@ public class Recognizer extends Activity implements RecognitionListener,Runnable
         File targetDir = new File(externalFilesDir, "model");
         String resultPath = (new File(targetDir, "model-en-us")).getAbsolutePath();
         this.model = new Model(resultPath);
+        Log.d(TAG,"模型构建完毕");
     }
 
-    private static double fluency = 0.1;
+
 
 
     @Override
@@ -162,6 +167,7 @@ public class Recognizer extends Activity implements RecognitionListener,Runnable
             }
             sentence_read.append(result.getText());
         }
+        check();
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
@@ -181,14 +187,9 @@ public class Recognizer extends Activity implements RecognitionListener,Runnable
                 if (ais.skip(44) != 44) throw new IOException("File too short");
 
                 speechStreamService = new SpeechStreamService(rec, ais, 44100.f);
-                thread = new Thread(this);
-                thread.start();
-                try {
-                    thread.join();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                check();
+                Log.d(TAG,"开始监听");
+                speechStreamService.start(this);
+
             } catch (IOException e) {
                 e.printStackTrace();
             }
