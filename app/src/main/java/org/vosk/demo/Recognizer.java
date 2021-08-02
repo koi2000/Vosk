@@ -29,7 +29,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class Recognizer extends Activity implements RecognitionListener,Runnable{
+public class Recognizer implements RecognitionListener{
 
     private static int num = 0;
     private static final String TAG = "MainActivity4";
@@ -53,7 +53,7 @@ public class Recognizer extends Activity implements RecognitionListener,Runnable
     private int score;
     private Thread thread;
     private Context that;
-    private Runnable runnable;
+    //private Runnable runnable;
     private static double fluency = 0.1;
 
     public Recognizer(Context that,String txt, String audioPath) {
@@ -65,19 +65,20 @@ public class Recognizer extends Activity implements RecognitionListener,Runnable
     }
 
 
+    /*
     @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
     public void run() {
         Looper.prepare();
-        initModel(that);
-        recognizeFile_read();
+
         Looper.loop();
     }
+     */
 
     @RequiresApi(api = Build.VERSION_CODES.N)
     public void build(){
-        thread = new Thread(this);
-        thread.start();
+        recognizeFile_read();
+        Log.d(TAG,"线程执行完毕");
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
@@ -87,8 +88,8 @@ public class Recognizer extends Activity implements RecognitionListener,Runnable
 
 
     @TargetApi(Build.VERSION_CODES.FROYO)
-    private void initModel(Context that) {
-        Log.d("Recognizer", that.toString());
+    public void initModel() {
+        Log.d(TAG, that.toString());
         if (num == 0) {
             move.copyFilesFromAssets(that, "systemSecure", that.getExternalFilesDir("").getAbsolutePath());
             ++num;
@@ -290,7 +291,7 @@ public class Recognizer extends Activity implements RecognitionListener,Runnable
         //求总分
         tot_score = (flu_score+com_score+pro_score+acc_score)/4;
 
-        Log.d(TAG,"打分结束");
+        Log.d(TAG,"打分结束"+(int)tot_score);
         score =  (int)tot_score;
     }
 
