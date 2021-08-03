@@ -4,7 +4,9 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
 import android.os.Build;
+import android.os.Handler;
 import android.os.Looper;
+import android.os.Message;
 import android.util.Log;
 
 
@@ -50,11 +52,12 @@ public class Recognizer implements RecognitionListener{
     private String grammer;
     private String txt;
     private String audioPath;
-    private int score;
+    //private int score;
     private Thread thread;
     private Context that;
     //private Runnable runnable;
     private static double fluency = 0.1;
+    private Handler handler;
 
     public Recognizer(Context that,String txt, String audioPath) {
         this.that = that;
@@ -76,14 +79,10 @@ public class Recognizer implements RecognitionListener{
      */
 
     @RequiresApi(api = Build.VERSION_CODES.N)
-    public void build(){
+    public void build(Handler obj){
+        handler=obj;
         recognizeFile_read();
         Log.d(TAG,"线程执行完毕");
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.N)
-    public int getScore(){
-        return score;
     }
 
 
@@ -94,7 +93,6 @@ public class Recognizer implements RecognitionListener{
             move.copyFilesFromAssets(that, "systemSecure", that.getExternalFilesDir("").getAbsolutePath());
             ++num;
         }
-
         File externalFilesDir = that.getExternalFilesDir("");
         File targetDir = new File(externalFilesDir, "model");
         String resultPath = (new File(targetDir, "model-en-us")).getAbsolutePath();
@@ -155,7 +153,6 @@ public class Recognizer implements RecognitionListener{
         Gson gson = new Gson();
         results result = gson.fromJson(hypothesis, results.class);
 
-
         if(result!=null&&result.getResult()!=null){
             try {
                 for (org.vosk.demo.entity.partialResult partialResult:result.getResult()) {
@@ -188,14 +185,13 @@ public class Recognizer implements RecognitionListener{
                 if (ais.skip(44) != 44) throw new IOException("File too short");
 
                 speechStreamService = new SpeechStreamService(rec, ais, 44100.f);
-                Log.d(TAG,"开始监听");
-                speechStreamService.start(this);
-
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        }
 
+            Log.d(TAG,"开始监听");
+            speechStreamService.start(this);
+        }
     }
 
 
@@ -283,16 +279,30 @@ public class Recognizer implements RecognitionListener{
         for (Double d:confs){
             sum+=d;
         }
-        pro_score = (double)sum*100/confs.size();
+
+        if(confs.size()==0){
+            pro_score=0;
+        }else {
+            pro_score = (double)sum*100/confs.size();
+        }
 
         //求准确度
-        acc_score = (double) (answerFirst.size()+punctuationNum)*100/sentence_splited.size();
+
+        if(sentence_splited.size()==0){
+            acc_score = 0;
+        }else {
+            acc_score = (double) (answerFirst.size()+punctuationNum)*100/sentence_splited.size();
+        }
 
         //求总分
         tot_score = (flu_score+com_score+pro_score+acc_score)/4;
 
         Log.d(TAG,"打分结束"+(int)tot_score);
-        score =  (int)tot_score;
+        int score =  (int)tot_score;
+        Message msg = Message.obtain();
+        msg.obj = score;
+        msg.what=1;
+        handler.sendMessage(msg);
     }
 
 
