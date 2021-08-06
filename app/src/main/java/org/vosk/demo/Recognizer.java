@@ -198,44 +198,38 @@ public class Recognizer implements RecognitionListener{
 
     @RequiresApi(api = Build.VERSION_CODES.N)
     private void check(){
-        Log.d(TAG,"show方法被调用");
         sentence = txt;
+        String sentence_pun =txt;
         String read = sentence_read.toString();
-
 
 //        数字转英文
         //sentence = ConvertNumberToStringUtils.convert(sentence);
-        sentence = sentence.replace(",", " , ");
-        sentence = sentence.replace("."," . ");
+        sentence = sentence.replace(",", " ");
+        sentence = sentence.replace("."," ");
+
+        sentence_pun = sentence_pun.replace(",", " , ");
+        sentence_pun = sentence_pun.replace("."," . ");
+
         Lcs lcs = new Lcs(sentence.toLowerCase(), sentence_read.toString().toLowerCase());
 
         lcs.Build();
-        Log.d(TAG,"lcs build成功");
 
         List<String> answerCommonList = lcs.getAnswerCommonList();
 
 
         sentence_splited = new ArrayList<>();
         sentence_splited.addAll(Arrays.asList(sentence.split(" ")));
+        List<String> sentence_pun_arr = new ArrayList<>(Arrays.asList(sentence_pun.split(" ")));
 
         Log.d(TAG,sentence_splited.toString());
 
         List<Integer> answerFirst = lcs.getAnswerFirstStringIndexs();
-
-        int punctuationNum = 0;
+        List<Integer> answerSecond = lcs.getAnswerSecondStringIndexs();
 
         Integer lastIndex = 0;
         if(answerFirst.size()!=0){
             lastIndex = answerFirst.get(answerFirst.size() - 1);
         }
-
-        for (int i = 0; i < sentence_splited.size(); i++) {
-            if (sentence_splited.get(i).equals(",")||sentence_splited.get(i).equals(".")){
-                punctuationNum++;
-            }
-        }
-
-        //设置字体前景色
 
         Log.d(TAG,"开始打分");
         //流利度
@@ -249,16 +243,17 @@ public class Recognizer implements RecognitionListener{
         //总分
         double tot_score = 0;
 
-
-
         //求流利度
         //查看当前读了多少句
         int num = 0;
-        for (int i=0;i<lastIndex;i++){
-            if(sentence_splited.get(i).equals(",")||sentence_splited.get(i).equals(".")){
+        int boundary = lastIndex;
+        for (int i=0;i<boundary;i++){
+            if(sentence_pun_arr.get(i).equals(",")||sentence_pun_arr.get(i).equals(".")){
                 num++;
+                boundary++;
             }
         }
+
         flu_score+=(double)num*100/fluency;
         if (flu_score>100){
             flu_score = 100;
@@ -272,35 +267,38 @@ public class Recognizer implements RecognitionListener{
             com_num = lastIndex;
         }
         Log.d(TAG,answerCommonList.toString());
-        com_score = (double)com_num*100/sentence_splited.size();
+        com_score = (double)com_num/sentence_splited.size();
+        com_score = Math.min(1.0,com_score);
 
         //求发音
         int sum = 0;
-        for (Double d:confs){
-            sum+=d;
+        for (int i = 0; i < answerSecond.size(); i++) {
+            if (i < words.size()) {
+                sum += confs.get(i);
+            }
         }
-
-        if(confs.size()==0){
-            pro_score=0;
-        }else {
-            pro_score = (double)sum*100/confs.size();
-        }
+        pro_score = Math.min(100.0,sum*100.0/(words.size()+0.01));
 
         //求准确度
-
         if(sentence_splited.size()==0){
             acc_score = 0;
         }else {
-            acc_score = (double) (answerFirst.size()+punctuationNum)*100/sentence_splited.size();
+            acc_score = (double) (answerFirst.size())*100/(sentence_splited.size()+0.01);
+            acc_score = Math.min(100.0,acc_score);
         }
 
         //求总分
-        tot_score = (flu_score+com_score+pro_score+acc_score)/4;
+        tot_score = acc_score*0.5+(pro_score+flu_score)*0.5*com_score*0.5;
 
-        Log.d(TAG,"打分结束"+(int)tot_score);
-        int score =  (int)tot_score;
+        tot_score = Math.sqrt(tot_score)*10;
+        Log.d(TAG,"流利度为:"+flu_score);
+        Log.d(TAG,"完整度为:"+com_score);
+        Log.d(TAG,"发音为:"+pro_score);
+        Log.d(TAG,"准确度为:"+acc_score);
+        Log.d(TAG,"总分为:"+tot_score);
+
         Message msg = Message.obtain();
-        msg.obj = score;
+        msg.obj = (int)tot_score;
         msg.what=1;
         handler.sendMessage(msg);
     }
