@@ -1,0 +1,132 @@
+package org.vosk.demo.Utils;
+
+import android.os.Build;
+import android.os.Handler;
+import android.os.Message;
+import android.util.Log;
+
+import androidx.annotation.RequiresApi;
+
+import com.google.gson.Gson;
+
+import org.vosk.android.RecognitionListener;
+import org.vosk.android.SpeechStreamService;
+import org.vosk.demo.entity.partialResult;
+import org.vosk.demo.entity.results;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class RecognitionListenerImpl implements RecognitionListener {
+
+    private static final String TAG = "RecognitionListenerImpl";
+
+    private StringBuilder sentence_read = new StringBuilder(); //需手动更新
+
+    private List<partialResult> partialResults;
+    private List<Double>confs;//需手动更新
+    private List<String>words;//需手动更新
+    private SpeechStreamService speechStreamService;
+    private Handler handler;
+    private double fluency = 0.01;
+
+    public RecognitionListenerImpl(SpeechStreamService speech, Handler obj) {
+        this.speechStreamService=speech;
+        this.handler=obj;
+        words = new ArrayList<>();
+        confs = new ArrayList<>();
+    }
+
+    public double getFluency() {
+        return fluency;
+    }
+
+    public List<Double> getConfs() {
+        return confs;
+    }
+
+    public List<String> getWords() {
+        return words;
+    }
+
+    public StringBuilder getSentence_read() {
+        return sentence_read;
+    }
+
+    @Override
+    public void onPartialResult(String hypothesis) {
+        Log.d(TAG,"onPartialResult方法被调用");
+        Log.d(TAG,hypothesis);
+    }
+
+    @Override
+    public void onResult(String hypothesis) {
+        fluency++;
+        Log.d(TAG,"onResult方法被调用");
+        Log.d(TAG,hypothesis);
+        Gson gson = new Gson();
+        results result = gson.fromJson(hypothesis, results.class);
+
+        if(result==null) {
+            Log.d(TAG,"转换失败，内容为空");
+            return;
+        };
+
+        if(result.getResult()==null) {
+            Log.d(TAG,"转换失败，内容为空");
+            return;
+        };
+
+        try {
+            for (org.vosk.demo.entity.partialResult partialResult:result.getResult()) {
+                double conf = partialResult.getConf();
+                words.add(partialResult.getWord());
+                confs.add(conf);
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        sentence_read.append(result.getText());
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    @Override
+    public void onFinalResult(String hypothesis) {
+
+        Log.d(TAG,"onFinalResult方法被调用");
+
+        if (speechStreamService != null) {
+            speechStreamService = null;
+        }
+        Log.d(TAG,hypothesis);
+
+        Gson gson = new Gson();
+        results result = gson.fromJson(hypothesis, results.class);
+
+        if(result!=null&&result.getResult()!=null){
+            try {
+                for (org.vosk.demo.entity.partialResult partialResult:result.getResult()) {
+                    double conf = partialResult.getConf();
+                    words.add(partialResult.getWord());
+                    confs.add(conf);
+                }
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+            sentence_read.append(result.getText());
+        }
+        Message msg = Message.obtain();
+        msg.what=1;
+        handler.sendMessage(msg);
+    }
+
+    @Override
+    public void onError(Exception e) {
+
+    }
+
+    @Override
+    public void onTimeout() {
+
+    }
+}

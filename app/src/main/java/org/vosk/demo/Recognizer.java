@@ -1,5 +1,6 @@
 package org.vosk.demo;
 
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
@@ -19,6 +20,7 @@ import org.vosk.android.RecognitionListener;
 import org.vosk.android.SpeechStreamService;
 import org.vosk.demo.Utils.ConverterUtils;
 import org.vosk.demo.Utils.Lcs;
+import org.vosk.demo.Utils.RecognitionListenerImpl;
 import org.vosk.demo.Utils.move;
 import org.vosk.demo.entity.partialResult;
 import org.vosk.demo.entity.results;
@@ -31,10 +33,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class Recognizer implements RecognitionListener{
+public class Recognizer{
 
     private static int num = 0;
-    private static final String TAG = "MainActivity4";
+    private static final String TAG = "Recognizer";
 
     private Model model;
     private SpeechStreamService speechStreamService;
@@ -45,21 +47,20 @@ public class Recognizer implements RecognitionListener{
 
     private StringBuilder sentence_read = new StringBuilder(); //需手动更新
 
-    private List<partialResult>partialResults;
     private List<Double>confs;//需手动更新
     private List<String>words;//需手动更新
     //存储转换后的句子，符合模型的要求
     private String grammer;
     private String txt;
     private String audioPath;
-    //private int score;
-    private Thread thread;
-    private Context that;
-    //private Runnable runnable;
-    private static double fluency = 0.1;
-    private Handler handler;
 
-    public Recognizer(Context that,String txt, String audioPath) {
+    private Context that;
+    private static double fluency = 0.1;
+    private RecognitionListenerImpl recognitionListener;
+    private Handler handler;
+    private @SuppressLint("HandlerLeak") Handler handler_to;
+
+    public Recognizer(Context that, String txt, String audioPath) {
         this.that = that;
         confs = new ArrayList<>();
         words = new ArrayList<>();
@@ -67,24 +68,11 @@ public class Recognizer implements RecognitionListener{
         this.audioPath = audioPath;
     }
 
-
-    /*
-    @RequiresApi(api = Build.VERSION_CODES.N)
-    @Override
-    public void run() {
-        Looper.prepare();
-
-        Looper.loop();
-    }
-     */
-
     @RequiresApi(api = Build.VERSION_CODES.N)
     public void build(Handler obj){
         handler=obj;
         recognizeFile_read();
-        Log.d(TAG,"线程执行完毕");
     }
-
 
     @TargetApi(Build.VERSION_CODES.FROYO)
     public void initModel() {
@@ -100,74 +88,7 @@ public class Recognizer implements RecognitionListener{
         Log.d(TAG,"模型构建完毕");
     }
 
-
-
-
-    @Override
-    public void onPartialResult(String hypothesis) {
-        Log.d(TAG,"onPartialResult方法被调用");
-        Log.d(TAG,hypothesis);
-    }
-
-    @Override
-    public void onResult(String hypothesis) {
-        Log.d(TAG,"onResult方法被调用");
-        Log.d(TAG,hypothesis);
-        Gson gson = new Gson();
-        results result = gson.fromJson(hypothesis, results.class);
-
-        if(result==null) {
-            Log.d(TAG,"转换失败，内容为空");
-            return;
-        };
-
-        if(result.getResult()==null) {
-            Log.d(TAG,"result里是空的");
-            return;
-        };
-
-        try {
-            for (org.vosk.demo.entity.partialResult partialResult:result.getResult()) {
-                double conf = partialResult.getConf();
-                words.add(partialResult.getWord());
-                confs.add(conf);
-            }
-        }catch (Exception e){
-            e.printStackTrace();
-        }
-        sentence_read.append(result.getText());
-    }
-
-
-    @RequiresApi(api = Build.VERSION_CODES.N)
-    @Override
-    public void onFinalResult(String hypothesis) {
-
-        Log.d(TAG,"onFinalResult方法被调用");
-
-        if (speechStreamService != null) {
-            speechStreamService = null;
-        }
-        Log.d(TAG,hypothesis);
-
-        Gson gson = new Gson();
-        results result = gson.fromJson(hypothesis, results.class);
-
-        if(result!=null&&result.getResult()!=null){
-            try {
-                for (org.vosk.demo.entity.partialResult partialResult:result.getResult()) {
-                    double conf = partialResult.getConf();
-                    words.add(partialResult.getWord());
-                    confs.add(conf);
-                }
-            }catch (Exception e){
-                e.printStackTrace();
-            }
-            sentence_read.append(result.getText());
-        }
-        check();
-    }
-
+    @SuppressLint("HandlerLeak")
     @RequiresApi(api = Build.VERSION_CODES.N)
     private void recognizeFile_read() {
         Log.d(TAG,"调用了recognizeFile_read");
@@ -189,11 +110,27 @@ public class Recognizer implements RecognitionListener{
                 e.printStackTrace();
             }
 
+            handler_to  = new Handler(){
+                @RequiresApi(api = Build.VERSION_CODES.N)
+                @SuppressLint("HandlerLeak")
+                @Override
+                public void handleMessage(Message msg) {
+                    super.handleMessage(msg);
+                    //判断标志位
+                    if (msg.what == 1) {
+                        confs = recognitionListener.getConfs();
+                        words = recognitionListener.getWords();
+                        sentence_read = recognitionListener.getSentence_read();
+                        fluency = recognitionListener.getFluency();
+                        check();
+                    }
+                }
+            };
+            recognitionListener = new RecognitionListenerImpl(speechStreamService,handler_to);
             Log.d(TAG,"开始监听");
-            speechStreamService.start(this);
+            speechStreamService.start(recognitionListener);
         }
     }
-
 
 
     @RequiresApi(api = Build.VERSION_CODES.N)
@@ -301,16 +238,5 @@ public class Recognizer implements RecognitionListener{
         msg.obj = (int)tot_score;
         msg.what=1;
         handler.sendMessage(msg);
-    }
-
-
-
-
-    @Override
-    public void onError(Exception e) {
-    }
-
-    @Override
-    public void onTimeout() {
     }
 }
