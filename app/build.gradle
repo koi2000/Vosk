@@ -33,7 +33,7 @@ android {
 }
 
 dependencies {
-    embed 'com.google.code.gson:gson:2.8.6'
+    //embed 'com.google.code.gson:gson:2.8.6'
     embed 'net.java.dev.jna:jna:5.8.0@aar'
     embed group: 'com.alphacephei', name: 'vosk-android', version: '0.3.23'
     implementation 'com.github.microshow:RxFFmpeg:4.9.0'
