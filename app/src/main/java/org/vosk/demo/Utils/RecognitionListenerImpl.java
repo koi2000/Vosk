@@ -28,7 +28,7 @@ public class RecognitionListenerImpl implements RecognitionListener {
     private List<String>words;//需手动更新
     private SpeechStreamService speechStreamService;
     private Handler handler;
-    private double fluency = 0.01;
+    //private double fluency = 0.01;
 
     public RecognitionListenerImpl(SpeechStreamService speech, Handler obj) {
         this.speechStreamService=speech;
@@ -37,9 +37,12 @@ public class RecognitionListenerImpl implements RecognitionListener {
         confs = new ArrayList<>();
     }
 
+    /*
     public double getFluency() {
         return fluency;
     }
+
+     */
 
     public List<Double> getConfs() {
         return confs;
@@ -55,15 +58,19 @@ public class RecognitionListenerImpl implements RecognitionListener {
 
     @Override
     public void onPartialResult(String hypothesis) {
-        Log.d(TAG,"onPartialResult方法被调用");
-        Log.d(TAG,hypothesis);
+        //Log.d(TAG,"onPartialResult方法被调用");
+        //Log.d(TAG,hypothesis);
+        System.out.println("onPartialResult方法被调用");
+        System.out.println(hypothesis);
     }
 
     @Override
     public void onResult(String hypothesis) {
-        fluency++;
-        Log.d(TAG,"onResult方法被调用");
-        Log.d(TAG,hypothesis);
+        //fluency++;
+        //Log.d(TAG,"onResult方法被调用");
+        //Log.d(TAG,hypothesis);
+        System.out.println("onResult方法被调用");
+        System.out.println(hypothesis);
         Gson gson = new Gson();
         results result = gson.fromJson(hypothesis, results.class);
 

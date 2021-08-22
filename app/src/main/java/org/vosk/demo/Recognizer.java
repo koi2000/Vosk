@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
+import android.media.MediaRecorder;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
@@ -18,6 +19,7 @@ import com.google.gson.Gson;
 import org.vosk.Model;
 import org.vosk.android.RecognitionListener;
 import org.vosk.android.SpeechStreamService;
+import org.vosk.demo.Utils.ChangeAudio;
 import org.vosk.demo.Utils.ConverterUtils;
 import org.vosk.demo.Utils.Lcs;
 import org.vosk.demo.Utils.RecognitionListenerImpl;
@@ -31,7 +33,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
+import it.sauronsoftware.jave.AudioAttributes;
+import it.sauronsoftware.jave.Encoder;
+import it.sauronsoftware.jave.EncoderException;
+import it.sauronsoftware.jave.EncodingAttributes;
 
 public class Recognizer{
 
@@ -59,13 +68,23 @@ public class Recognizer{
     private RecognitionListenerImpl recognitionListener;
     private Handler handler;
     private @SuppressLint("HandlerLeak") Handler handler_to;
+    private float sampleRate;
+    private String outputDir;
 
-    public Recognizer(Context that, String txt, String audioPath) {
+    public Recognizer(Context that, String txt, String audioPath,float sampleRate) {
         this.that = that;
         confs = new ArrayList<>();
         words = new ArrayList<>();
         this.txt = txt;
         this.audioPath = audioPath;
+        this.sampleRate = sampleRate;
+    }
+
+    public void SampleRateConverter(String outputDirPath,String changeRate) throws EncoderException {
+        this.outputDir = outputDirPath;
+        ChangeAudio changeAudio = new ChangeAudio(audioPath, outputDir, changeRate);
+        changeAudio.run();
+        this.audioPath = outputDirPath;
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
@@ -98,14 +117,16 @@ public class Recognizer{
         } else {
             try {
                 grammer = new ConverterUtils().stringToGrammer(txt);
-                org.vosk.Recognizer rec = new org.vosk.Recognizer(model, 44100.f, grammer.toLowerCase());
+                org.vosk.Recognizer rec = new org.vosk.Recognizer(model, sampleRate, grammer.toLowerCase());
 
                 InputStream ais = new FileInputStream(new File(audioPath));
+                //InputStream ais = new FileInputStream(new File(this.outputDir));
 
-                Log.d(TAG,"当前文件可用字节"+ais.available());
+                //Log.d(TAG,"当前文件可用字节"+ais.available());
+                System.out.println("当前文件可用字节"+ais.available());
                 if (ais.skip(44) != 44) throw new IOException("File too short");
 
-                speechStreamService = new SpeechStreamService(rec, ais, 44100.f);
+                speechStreamService = new SpeechStreamService(rec, ais, sampleRate);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -121,7 +142,7 @@ public class Recognizer{
                         confs = recognitionListener.getConfs();
                         words = recognitionListener.getWords();
                         sentence_read = recognitionListener.getSentence_read();
-                        fluency = recognitionListener.getFluency();
+                        //fluency = recognitionListener.getFluency();
                         check();
                     }
                 }
@@ -182,6 +203,7 @@ public class Recognizer{
 
         //求流利度
         //查看当前读了多少句
+        /*
         int num = 0;
         int boundary = lastIndex;
         for (int i=0;i<boundary;i++){
@@ -195,6 +217,7 @@ public class Recognizer{
         if (flu_score>100){
             flu_score = 100;
         }
+         */
 
         //求完整度
         int com_num = 0;
@@ -205,6 +228,9 @@ public class Recognizer{
         }
         Log.d(TAG,answerCommonList.toString());
         com_score = (double)com_num/sentence_splited.size();
+        if (sentence_splited.size()==0){
+            com_score = 0;
+        }
         com_score = Math.min(1.0,com_score);
 
         //求发音
@@ -214,7 +240,10 @@ public class Recognizer{
                 sum += confs.get(i);
             }
         }
-        pro_score = Math.min(100.0,sum*100.0/(words.size()+0.01));
+        pro_score = Math.min(100.0,sum*100.0/(words.size()));
+        if(words.size()==0){
+            pro_score = 0;
+        }
 
         //求准确度
         if(sentence_splited.size()==0){
@@ -222,20 +251,31 @@ public class Recognizer{
         }else {
             acc_score = (double) (answerFirst.size())*100/(sentence_splited.size()+0.01);
             acc_score = Math.min(100.0,acc_score);
+            if(answerFirst == null ||sentence_splited.equals(null)){
+                acc_score = 0;
+            }
+
         }
 
+
         //求总分
-        tot_score = acc_score*0.5+(pro_score+flu_score)*0.5*com_score*0.5;
+        tot_score = acc_score*0.5+pro_score*com_score*0.5;
 
         tot_score = Math.sqrt(tot_score)*10;
-        Log.d(TAG,"流利度为:"+flu_score);
+        //Log.d(TAG,"流利度为:"+acc_score);
         Log.d(TAG,"完整度为:"+com_score);
         Log.d(TAG,"发音为:"+pro_score);
         Log.d(TAG,"准确度为:"+acc_score);
         Log.d(TAG,"总分为:"+tot_score);
 
+        Map map = new HashMap<String,Double>();
+        //map.put("流利度",flu_score);
+        map.put("完整度",com_score*100);
+        map.put("发音",pro_score);
+        map.put("流利度",acc_score);
+        map.put("总分为",tot_score);
         Message msg = Message.obtain();
-        msg.obj = (int)tot_score;
+        msg.obj = map;
         msg.what=1;
         handler.sendMessage(msg);
     }
