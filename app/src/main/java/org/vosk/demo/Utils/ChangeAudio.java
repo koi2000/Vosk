@@ -1,14 +1,12 @@
 package org.vosk.demo.Utils;
-
+/*
 import android.util.Log;
 
 import io.microshow.rxffmpeg.RxFFmpegCommandList;
 import io.microshow.rxffmpeg.RxFFmpegInvoke;
 
 public class ChangeAudio {
-    //    "/storage/emulated/0/1/input.mp4"
     String audioInputFilePath;
-    //    "/storage/emulated/0/1/output.mp4"
     String audioOutputFilePath;
     String sampleRate;
 
@@ -29,9 +27,11 @@ public class ChangeAudio {
         cmdlist.append(audioOutputFilePath);  //"/storage/emulated/0/1/input.mp4"
         return cmdlist.build();
     }
+
     public void run(){
         //RxFFmpegInvoke.getInstance().getMediaInfo(audioInputFilePath);
         RxFFmpegInvoke.getInstance().runCommandRxJava(commandList).subscribe();
         Log.d("TAG","切");
     }
 }
+ */

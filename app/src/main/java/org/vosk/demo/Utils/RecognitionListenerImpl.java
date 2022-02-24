@@ -4,6 +4,7 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
+import android.util.Pair;
 
 import androidx.annotation.RequiresApi;
 
@@ -28,6 +29,7 @@ public class RecognitionListenerImpl implements RecognitionListener {
     private List<String>words;//需手动更新
     private SpeechStreamService speechStreamService;
     private Handler handler;
+    private List<Pair<String,Double>>wordsConf;
     //private double fluency = 0.01;
 
     public RecognitionListenerImpl(SpeechStreamService speech, Handler obj) {
@@ -35,14 +37,8 @@ public class RecognitionListenerImpl implements RecognitionListener {
         this.handler=obj;
         words = new ArrayList<>();
         confs = new ArrayList<>();
+        wordsConf = new ArrayList<>();
     }
-
-    /*
-    public double getFluency() {
-        return fluency;
-    }
-
-     */
 
     public List<Double> getConfs() {
         return confs;
@@ -56,19 +52,18 @@ public class RecognitionListenerImpl implements RecognitionListener {
         return sentence_read;
     }
 
+    public List<Pair<String, Double>> getWordsConf() {
+        return wordsConf;
+    }
+
     @Override
     public void onPartialResult(String hypothesis) {
-        //Log.d(TAG,"onPartialResult方法被调用");
-        //Log.d(TAG,hypothesis);
         System.out.println("onPartialResult方法被调用");
         System.out.println(hypothesis);
     }
 
     @Override
     public void onResult(String hypothesis) {
-        //fluency++;
-        //Log.d(TAG,"onResult方法被调用");
-        //Log.d(TAG,hypothesis);
         System.out.println("onResult方法被调用");
         System.out.println(hypothesis);
         Gson gson = new Gson();
@@ -89,11 +84,12 @@ public class RecognitionListenerImpl implements RecognitionListener {
                 double conf = partialResult.getConf();
                 words.add(partialResult.getWord());
                 confs.add(conf);
+                wordsConf.add(new Pair<>(partialResult.getWord(),conf));
             }
         }catch (Exception e){
             e.printStackTrace();
         }
-        sentence_read.append(result.getText());
+        sentence_read.append(result.getText()).append(" ");
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
@@ -116,11 +112,12 @@ public class RecognitionListenerImpl implements RecognitionListener {
                     double conf = partialResult.getConf();
                     words.add(partialResult.getWord());
                     confs.add(conf);
+                    wordsConf.add(new Pair<>(partialResult.getWord(),conf));
                 }
             }catch (Exception e){
                 e.printStackTrace();
             }
-            sentence_read.append(result.getText());
+            sentence_read.append(result.getText()).append(" ");
         }
         Message msg = Message.obtain();
         msg.what=1;
