@@ -16,7 +16,9 @@
 # Application classes that will be serialized/deserialized over Gson
 -keep class org.vosk.demo.entity.results { *; }
 -keep class org.vosk.demo.entity.partialResult { *; }
-
+-keep class org.vosk.demo.Recognizer
+-keep class org.vosk.demo.Utils.Pcm2WavUtil
+-dontshrink
 
 # Prevent proguard from stripping interface information from TypeAdapter, TypeAdapterFactory,
 # JsonSerializer, JsonDeserializer instances (so they can be used in @JsonAdapter)

@@ -1,6 +1,5 @@
 package org.vosk.demo.Utils;
 
-
 import android.util.Log;
 
 import io.microshow.rxffmpeg.RxFFmpegCommandList;

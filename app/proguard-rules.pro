@@ -13,18 +13,20 @@
 -dontwarn sun.misc.**
 #-keep class com.google.gson.stream.** { *; }
 
+-dontshrink
 # Application classes that will be serialized/deserialized over Gson
 -keep class org.vosk.demo.entity.results { *; }
 -keep class org.vosk.demo.entity.partialResult { *; }
-
-
+-keep class org.vosk.demo.Recognizer
+-keep class org.vosk.demo.Utils.Pcm2WavUtil
+#-keep class org.vosk.demo.Utils.ChangeAudio
 # Prevent proguard from stripping interface information from TypeAdapter, TypeAdapterFactory,
 # JsonSerializer, JsonDeserializer instances (so they can be used in @JsonAdapter)
 -keep class * extends com.google.gson.TypeAdapter
 -keep class * implements com.google.gson.TypeAdapterFactory
 -keep class * implements com.google.gson.JsonSerializer
 -keep class * implements com.google.gson.JsonDeserializer
-
+#-keep class * implements io.microshow.rxffmpeg.*
 # Prevent R8 from leaving Data object members always null
 -keepclassmembers,allowobfuscation class * {
   @com.google.gson.annotations.SerializedName <fields>;
@@ -33,6 +35,6 @@
 ##---------------End: proguard configuration for Gson  ----------
 
 ##---------------START: proguard configuration for RXFFMPEG  ----------
--dontwarn io.microshow.rxffmpeg.**
--keep class io.microshow.rxffmpeg.**{*;}
+#-dontwarn io.microshow.rxffmpeg.**
+#-keep class io.microshow.rxffmpeg.*
 ##---------------END: proguard configuration for RXFFMPEG  ----------
