@@ -258,7 +258,7 @@ public class Recognizer {
         //pro_score = Math.sqrt(pro_score)*10;
         //acc_score = Math.sqrt(acc_score)*10;
 
-        double tot_score = Math.sqrt(0.35*com_score+0.15*pro_score+acc_score*0.5)*10;
+        double tot_score = 0.35*com_score+0.15*pro_score+acc_score*0.5;
         map.put("完整度", com_score);
         map.put("发音", pro_score);
         map.put("准确度", acc_score);
